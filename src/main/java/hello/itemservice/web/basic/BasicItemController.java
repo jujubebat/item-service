@@ -6,6 +6,7 @@ import hello.itemservice.domain.item.ItemRepository;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.Banner.Mode;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/basic/items")
@@ -77,11 +79,39 @@ public class BasicItemController {
         return "basic/item";
     }
 
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItemV4(Item item) { // @ModelAttribute 생략 가능!
         itemRepository.save(item);
 
         return "basic/item";
+    }
+
+    //@PostMapping("/add")
+    public String addItemV5(Item item) { // @ModelAttribute 생략 가능!
+        itemRepository.save(item);
+
+        return "redirect:/basic/items/" + item.getId(); // 새로고침시 POST 요청이 아닌 GET 요청이 보내지도록 리다이렉트한다. PRG 패턴
+    }
+
+    @PostMapping("/add")
+    public String addItemV6(Item item, RedirectAttributes redirectAttributes) { // @ModelAttribute 생략 가능!
+        Item savedItem =  itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId()); // 리다이렉트 Uri에 path variable로 들어간다.
+        redirectAttributes.addAttribute("status", true); // 리다이렉트 Uri에 쿼리 파람 형식으로 들어간다.
+        return "redirect:/basic/items/{itemId}";
+    }
+
+    @GetMapping("/{itemId}/edit")
+    public String editForm(@PathVariable Long itemId, Model model){
+        Item item = itemRepository.findById(itemId);
+        model.addAttribute("item", item);
+        return "basic/editForm";
+    }
+
+    @PostMapping("/{itemId}/edit")
+    public String edit(@PathVariable Long itemId, @ModelAttribute Item item){
+        itemRepository.update(itemId, item);
+        return "redirect:/basic/items/{itemId}";
     }
 
     // 테스트용 데이터 추가
